@@ -1,8 +1,11 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 public class LZW
 {
-	public List<Integer> compress (ArrayList<Character> uncompressed)
+	public ArrayList<Integer> compress (ArrayList<Character> uncompressed)
 	{
 		Map<String, Integer> dictionary = new HashMap<String, Integer>();
 		
@@ -13,7 +16,7 @@ public class LZW
 			dictionary.put("" + (char)i, i);
 		}
 		
-		List<Integer> complete = new ArrayList<Integer>();
+		ArrayList<Integer> complete = new ArrayList<Integer>();
 		
 		String currentLetters = "";
 
@@ -75,5 +78,19 @@ public class LZW
 		}
 		
 		return (currentLetters);
+	}
+	
+	public ArrayList<Character> makeArrayList (String fileName) throws IOException
+	{
+		BufferedReader reader = new BufferedReader(new FileReader(fileName));
+		
+		ArrayList<Character> list = new ArrayList<Character>();
+		
+		while (reader.ready())
+		{
+			list.add((char)reader.read());
+		}
+		
+		return (list);
 	}
 }
