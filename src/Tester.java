@@ -7,7 +7,7 @@ public class Tester
 	{
 		LZW compressor = new LZW ();
 		
-		ArrayList<Character> charList = compressor.makeArrayList("lzw-file3.txt");
+		ArrayList<Character> charList = compressor.makeArrayList("lzw-file1.txt");
 		ArrayList<Integer> intList = compressor.compress(charList);
 		System.out.println (intList);
 		String word = compressor.decompress(intList);
