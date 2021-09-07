@@ -27,9 +27,11 @@ public class LZW
 		
 		int dictionarySize = 256;
 		
-		for (int i = 0; i < 256; i++)
+		for (int i = 0; i < dictionarySize; i++)
 		{
-			dictionary.put("" + (char)i, i);
+			Character theChar = (char)i;
+			String theString = "" + theChar;
+			dictionary.put(theString, i);
 		}
 		
 		//create an ArrayList of ints and add to it as I compress the file
@@ -76,9 +78,11 @@ public class LZW
 		
 		int dictionarySize = 256;
 		
-		for (int i = 0; i < 256; i++)
+		for (int i = 0; i < dictionarySize; i++)
 		{
-			dictionary.put(i, "" + (char)i);
+			Character theChar = (char)i;
+			String theString = "" + theChar;
+			dictionary.put(i, theString);
 		}
 		
 		//extract the first char & initialize it to a variable
