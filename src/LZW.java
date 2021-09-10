@@ -1,6 +1,12 @@
+import java.math.BigInteger;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.*;
 
 public class LZW
@@ -20,9 +26,10 @@ public class LZW
 		return (list);
 	}
 	
-	public ArrayList<Integer> compress (ArrayList<Character> uncompressed)
+	public void compress (String inputFileName, String outputFileName) throws Exception
 	{
-		//creating the dictionary and filling it with all the chars
+		ArrayList<Character> uncompressed = makeArrayList(inputFileName);
+		
 		Map<String, Integer> dictionary = new HashMap<String, Integer>();
 		
 		int dictionarySize = 256;
@@ -34,12 +41,9 @@ public class LZW
 			dictionary.put(theString, i);
 		}
 		
-		//create an ArrayList of ints and add to it as I compress the file
 		ArrayList<Integer> complete = new ArrayList<Integer>();
 		
 		String currentLetters = "";
-
-		//go through the ArrayLists of chars
 		
 		for (int i = 0; i < uncompressed.size(); i++)
 		{
@@ -47,8 +51,6 @@ public class LZW
 			
 			String theString = currentLetters + theChar;
 			
-			//if the dictionary already contains the String in its directory, set the current set of letters to the String
-			//if the dictionary doesn't contain the String in its directory, add the new int to the compressed output, add it in the dictionary, and reset currentLetters
 			if (dictionary.containsKey(theString))
 			{
 				currentLetters = theString;
@@ -61,73 +63,52 @@ public class LZW
 			}
 		}
 		
-		//if currentLetters isn't empty, add the compressed int to the ArrayList
 		if (!currentLetters.equals(""))
 		{
 			complete.add(dictionary.get(currentLetters));
 		}
 		
-		//return compressed list of ints
-		return (complete);
+		makeCompressedFile (complete, outputFileName);
 	}
 	
-	public String decompress (ArrayList<Integer> compressed)
+	public void makeCompressedFile (ArrayList<Integer> compressed, String fileName) throws Exception
 	{
-		//creating the dictionary and filling it with all the chars
-		Map<Integer, String> dictionary = new HashMap<Integer, String>();
+		String output = "";
+		int bitLength = 12;
 		
-		int dictionarySize = 256;
-		
-		for (int i = 0; i < dictionarySize; i++)
+		for (int a : compressed)
 		{
-			Character theChar = (char)i;
-			String theString = "" + theChar;
-			dictionary.put(i, theString);
-		}
-		
-		//extract the first char & initialize it to a variable
-		int firstCompressedInt = compressed.get(0);
-		Character firstCompressedChar = (char)firstCompressedInt;
-		
-		//remove the first compressed part so it doesn't repeat in output
-		compressed.remove(0);
-		
-		//initialize the firstCompressedChar as a String
-		String currentLetters = "" + firstCompressedChar;
-		
-		//prepare the output String
-		String output = currentLetters;
-		
-		//go through compressed ArrayList one-by-one
-		for (int i = 0; i < compressed.size(); i++)
-		{
-			int letters = compressed.get(i);
-					
-			String dictionaryEntry;
+			String intToBinaryString = Integer.toBinaryString(a);
 			
-			//if dictionary already contains the int in its directory, initialize the corresponding chars to dictionaryEntry
-			//if dictionary does not contain the int in its directory, add the first char to the currentLetters
-			if (dictionary.containsKey(letters))
+			if (intToBinaryString.length() == bitLength)
 			{
-				dictionaryEntry = dictionary.get(letters);
+				output = output + Integer.toBinaryString(a);
+			}
+			else if (intToBinaryString.length() < bitLength)
+			{
+				intToBinaryString = String.format("%" + bitLength + "s", Integer.toBinaryString(a)).replaceAll(" ", "0");
+				output = output + Integer.toBinaryString(a);
 			}
 			else
 			{
-				dictionaryEntry = currentLetters + currentLetters.charAt(0);
+				throw new Exception("File is unable to be compressed using a " + bitLength + " bit compressor.");
 			}
-			
-			//add the entry to the output
-			output = output + dictionaryEntry;
-			
-			//add new char combination to the dictionary
-			dictionary.put(dictionarySize++, currentLetters + dictionaryEntry.charAt(0));
-			
-			
-			//reset current letters with the new entry
-			currentLetters = dictionaryEntry;
 		}
 		
-		//return uncompressed String
-		return (output);
+		BinaryOut theOutClass = new BinaryOut(fileName);
+       
+		for (int i = 0; i < output.length(); i++)
+		{
+            if (output.charAt(i) == '0')
+            {
+                theOutClass.write(false);
+            }
+            else
+            {
+                theOutClass.write(true);
+            }
+        }
+       
+		theOutClass.flush();
 	}
 }
