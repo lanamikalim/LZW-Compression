@@ -111,4 +111,46 @@ public class LZW
        
 		theOutClass.flush();
 	}
+	public void decompress(String filename, String outputFilename)
+	{
+		PrintWriter output = new PrintWriter(outputFilename);
+		InputStream reader = new InputStream(filename);
+		Map<Integer, String> dictionary = new HashMap<Integer, String>();
+		int dictionarySize = 256;
+		for (int i = 0; i < dictionarySize; i++)
+		{
+			Character theChar = (char)i;
+			String theString = "" + theChar;
+			dictionary.put(i,theString);
+		}
+		StringBuilder newBytes = new StringBuilder();
+		int byteRead = reader.read();
+		int bitLen = 12;
+        while (byteRead != -1) 
+         {
+        	String byteStr = byteRead.toBinaryString();
+        	while(byteStr.length()<bitLen)
+        	{
+        		byteStr="0"+byteStr;
+        	}
+        	newBytes.append(byteStr);
+         }
+        
+        for(int i=0;i<newBytes.length();i+=bitLen)
+        {
+        	int current = (int)(newBytes.substring(i,i+bitLen));
+        	int next = (int)(newBytes.substring(i+bitLen,i+bitLen+bitLen));
+        	if(dictionary.containsValue(dictionary.getValue(current)+dictionary.getValue(next).toString(0,1)))
+        	{
+        		dictionary.put(dictionary.size(), dictionary.getValue(current)+dictionary.getValue(next).toString(0,1));
+        	}
+        }
+        for(int i=0;i<newBytes.length();i+=bitLen)
+        {
+        	int current = (int)(newBytes.substring(i,i+bitLen));
+        	output.print(dictionary.get(current));
+        }
+        reader.close();
+        out.close();
+	}
 }
