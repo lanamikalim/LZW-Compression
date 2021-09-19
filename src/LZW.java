@@ -5,8 +5,10 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.util.*;
 
 public class LZW
@@ -111,10 +113,10 @@ public class LZW
        
 		theOutClass.flush();
 	}
-	public void decompress(String filename, String outputFilename)
+	public void decompress(String filename, String outputFilename) throws IOException
 	{
 		PrintWriter output = new PrintWriter(outputFilename);
-		InputStream reader = new InputStream(filename);
+		InputStream reader = new FileInputStream(filename);
 		Map<Integer, String> dictionary = new HashMap<Integer, String>();
 		int dictionarySize = 256;
 		for (int i = 0; i < dictionarySize; i++)
@@ -128,7 +130,7 @@ public class LZW
 		int bitLen = 12;
         while (byteRead != -1) 
          {
-        	String byteStr = byteRead.toBinaryString();
+        	String byteStr = Integer.toBinaryString(byteRead);
         	while(byteStr.length()<bitLen)
         	{
         		byteStr="0"+byteStr;
@@ -138,19 +140,21 @@ public class LZW
         
         for(int i=0;i<newBytes.length();i+=bitLen)
         {
-        	int current = (int)(newBytes.substring(i,i+bitLen));
-        	int next = (int)(newBytes.substring(i+bitLen,i+bitLen+bitLen));
-        	if(dictionary.containsValue(dictionary.getValue(current)+dictionary.getValue(next).toString(0,1)))
+        	int current = Integer.parseInt((newBytes.substring(i,i+bitLen)));
+        	int next = Integer.parseInt((newBytes.substring(i+bitLen,i+bitLen+bitLen)));
+//        	dictionary.getValue(current) + dictionary.getValue(next).toString(0,1)
+        	String value = dictionary.get(current) + dictionary.get(next);
+        	if(dictionary.containsValue(value))
         	{
-        		dictionary.put(dictionary.size(), dictionary.getValue(current)+dictionary.getValue(next).toString(0,1));
+        		dictionary.put(dictionary.size(), value);
         	}
         }
         for(int i=0;i<newBytes.length();i+=bitLen)
         {
-        	int current = (int)(newBytes.substring(i,i+bitLen));
+        	int current = Integer.parseInt((newBytes.substring(i,i+bitLen)));
         	output.print(dictionary.get(current));
         }
-        reader.close();
-        out.close();
+		reader.close();
+		output.close();
 	}
 }
