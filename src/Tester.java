@@ -8,8 +8,13 @@ public class Tester
 		LZW compressor = new LZW ();
 
 		try {
-			compressor.compress("lzw-file3.txt", "output.dat");
+			final long startTime = System.currentTimeMillis();
+		
+			
+			compressor.compress("lzw-file1.txt", "output.dat");
 			compressor.decompress("output.dat", "decompressedOutput.txt");
+			final long endTime = System.currentTimeMillis();
+			System.out.println(endTime-startTime);
 		} catch (IOException e) {
 			System.out.println("IOEXCEPTION THROWN, " + e.getMessage());
 			

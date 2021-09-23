@@ -1,5 +1,9 @@
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -70,6 +74,7 @@ public class LZW
 			complete.add(dictionary.get(currentLetters));
 		}
 		
+		
 		makeCompressedFile (complete, outputFileName);
 	}
 	
@@ -81,22 +86,24 @@ public class LZW
 		for (int a : compressed)
 		{
 			String intToBinaryString = Integer.toBinaryString(a);
-			
+			System.out.print(" int to: " + a + " in binary is: " + intToBinaryString);
 			if (intToBinaryString.length() == bitLength)
 			{
+				System.out.println("");
 				output = output + Integer.toBinaryString(a);
 			}
 			else if (intToBinaryString.length() < bitLength)
 			{
 				intToBinaryString = String.format("%" + bitLength + "s", Integer.toBinaryString(a)).replaceAll(" ", "0");
-				output = output + Integer.toBinaryString(a);
+				System.out.print(" padded to: " + intToBinaryString + "\n");
+				output = output + intToBinaryString;
 			}
 			else
 			{
 				throw new Exception("File is unable to be compressed using a " + bitLength + " bit compressor.");
 			}
 		}
-		
+		System.out.println("output: " + output);
 		BinaryOut theOutClass = new BinaryOut(fileName);
        
 		for (int i = 0; i < output.length(); i++)
@@ -115,46 +122,98 @@ public class LZW
 	}
 	public void decompress(String filename, String outputFilename) throws IOException
 	{
-		PrintWriter output = new PrintWriter(outputFilename);
-		InputStream reader = new FileInputStream(filename);
-		Map<Integer, String> dictionary = new HashMap<Integer, String>();
-		int dictionarySize = 256;
-		for (int i = 0; i < dictionarySize; i++)
-		{
-			Character theChar = (char)i;
-			String theString = "" + theChar;
-			dictionary.put(i,theString);
-		}
-		StringBuilder newBytes = new StringBuilder();
-		int byteRead = reader.read();
-		int bitLen = 12;
-        while (byteRead != -1) 
-         {
-        	String byteStr = Integer.toBinaryString(byteRead);
-        	while(byteStr.length()<bitLen)
-        	{
-        		byteStr="0"+byteStr;
-        	}
-        	newBytes.append(byteStr);
-         }
-        
-        for(int i=0;i<newBytes.length();i+=bitLen)
-        {
-        	int current = Integer.parseInt((newBytes.substring(i,i+bitLen)));
-        	int next = Integer.parseInt((newBytes.substring(i+bitLen,i+bitLen+bitLen)));
-//        	dictionary.getValue(current) + dictionary.getValue(next).toString(0,1)
-        	String value = dictionary.get(current) + dictionary.get(next);
-        	if(dictionary.containsValue(value))
-        	{
-        		dictionary.put(dictionary.size(), value);
-        	}
-        }
-        for(int i=0;i<newBytes.length();i+=bitLen)
-        {
-        	int current = Integer.parseInt((newBytes.substring(i,i+bitLen)));
-        	output.print(dictionary.get(current));
-        }
+		
+      InputStream reader = new FileInputStream(filename);
+      BinaryIn binaryIn = new BinaryIn(reader);
+      
+      
+      StringBuilder dataBuilder = new StringBuilder();
+      try {
+    	  while(!binaryIn.isEmpty()) {
+    		  boolean bit = binaryIn.readBoolean();
+    		  if(bit) {
+    			  dataBuilder.append("1");
+    		  } else {
+    			  dataBuilder.append("0");
+    		  }
+    	  }
+	} catch (Exception e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+      
+   System.out.println(" data builder: " + dataBuilder.toString()); 
+   String finalData = dataBuilder.toString();
+   String cleanData = finalData.substring(0, finalData.length());
+
+	ArrayList<String> twelveBitPieces = new ArrayList<String>();
+	for(int i =0; i < cleanData.length()-12 ; i+=12) {
+
+
+		twelveBitPieces.add(cleanData.substring(i,i+12));
+	
+	}
+	
+	List<Integer> intList = new ArrayList<Integer>();
+	for(String s: twelveBitPieces) {
+		Integer newInt = Integer.parseInt(s,2);
+		intList.add(newInt);
+	}
+		String finalDecompressedString = decompressFromInput(intList);
+		writeBytesToFile(finalDecompressedString.getBytes(), outputFilename);
 		reader.close();
-		output.close();
+	
+	}
+	
+	
+	public void writeBytesToFile(byte[] resultInBytes, String fileName) {
+		File outputFile =  new File(fileName);
+		try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+			System.out.println("byte results:" + resultInBytes[0]);
+			outputStream.write(resultInBytes);
+		} catch (IOException e) {
+			System.out.print(String.format(" Cannot read the file: %s", fileName));
+		}
+	}
+	
+	public String decompressFromInput(List<Integer> compressedInput) {
+
+		int dictionarySize = 256;
+		Map<Integer,String> dictionary = buildDictionaryForDecompression(dictionarySize);
+
+		String word = "" + (char)(int)compressedInput.get(0);
+
+		StringBuffer result = new StringBuffer(word);
+
+		for (int i = 1; i < compressedInput.size()-1; i++) {
+			String entry;
+			int digit = compressedInput.get(i);
+
+			if (dictionary.containsKey(digit)) {
+				entry =  dictionary.get(digit);
+			}
+			else if (digit == dictionarySize) {
+				entry = word + word.charAt(0);
+			} 
+			else {
+				throw new IllegalArgumentException("Bad compressed digit: " + digit);
+			}
+
+			result.append(entry);
+
+			dictionary.put(dictionarySize++, word + entry.charAt(0));
+
+			word = entry;
+		}
+
+		return result.toString();
+	}
+	
+	private Map<Integer,String> buildDictionaryForDecompression(int dictionarySize) {
+		Map<Integer,String> dictionary = new HashMap<Integer,String>();
+		for (int i = 0; i < dictionarySize; i++) {
+			dictionary.put(i, "" + (char)i);
+		}
+		return dictionary;
 	}
 }
