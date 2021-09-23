@@ -14,7 +14,7 @@ public class Tester
 			compressor.compress("lzw-file1.txt", "output.dat");
 			compressor.decompress("output.dat", "decompressedOutput.txt");
 			final long endTime = System.currentTimeMillis();
-			System.out.println(endTime-startTime);
+			System.out.println("Time(ms): " + (endTime-startTime));
 		} catch (IOException e) {
 			System.out.println("IOEXCEPTION THROWN, " + e.getMessage());
 			
